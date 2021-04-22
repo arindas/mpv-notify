@@ -82,11 +82,26 @@ end
 
 -- extract image from audio file
 function extracted_image_from_audiofile (audiofile, imagedst)
-  local ffmpeg_cmd = ("ffmpeg -loglevel -8 -vsync 2 -i %s %s > /dev/null"):format(
+  local ffmpeg_cmd_a = ("ffmpeg -loglevel -8 -vsync 2 -y -i %s %s > /dev/null"):format(
     string.shellescape(audiofile), string.shellescape(imagedst)
   )
-  -- print_debug("executing " .. ffmpeg_cmd)
-  if os.execute(ffmpeg_cmd) then
+
+  -- print_debug("executing " .. ffmpeg_cmd_a)
+  if os.execute(ffmpeg_cmd_a) then
+    return true
+  end
+
+  return false
+end
+
+-- extract image from video file
+function extracted_image_from_videofile (audiofile, imagedst)
+  local ffmpeg_cmd_v = ("ffmpegthumbnailer -i %s -o %s 2>&1 > /dev/null"):format(
+    string.shellescape(audiofile), string.shellescape(imagedst)
+  )
+
+  -- print_debug("executing " .. ffmpeg_cmd_v)
+  if os.execute(ffmpeg_cmd_v) then
     return true
   end
 
@@ -106,11 +121,11 @@ COVER_ART_PATH = "/tmp/covert_art.jpg"
 ICON_PATH = "/tmp/icon.jpg"
 
 function notify_current_track()
-  os.remove(COVER_ART_PATH)
+  -- os.remove(COVER_ART_PATH)
   os.remove(ICON_PATH)
 
   local metadata = mp.get_property_native("metadata")
-	
+
   -- track doesn't contain metadata
   if not metadata then
 		return
@@ -123,18 +138,24 @@ function notify_current_track()
 
 	-- print_debug("notify_current_track(): -> extracted metadata:")
 	-- print_debug("artist: " .. artist)
-	-- print_debug("album: " .. album)	
+	-- print_debug("album: " .. album)
   -- print_debug("title: " .. title)
 
 	-- absolute filename of currently playing audio file
 	local abs_filename = os.getenv("PWD") .. "/" .. mp.get_property_native("path")
+  local bad_string = os.getenv("PWD") .. "//"
+  local abs_filename = string.gsub(abs_filename,bad_string,"/")
   -- print_debug(abs_filename)
 
   params = ""
   -- extract cover art: set it as icon in notification params
-  if extracted_image_from_audiofile(abs_filename, COVER_ART_PATH) then
-    if scaled_image(COVER_ART_PATH, ICON_PATH) then
-      params = "-i " .. ICON_PATH
+  if extracted_image_from_videofile(abs_filename, COVER_ART_PATH) then
+      params = "-i "..COVER_ART_PATH
+  else
+    if extracted_image_from_audiofile(abs_filename, COVER_ART_PATH) then
+      if scaled_image(COVER_ART_PATH, ICON_PATH) then
+        params = "-i " .. ICON_PATH
+      end
     end
   end
 
@@ -161,7 +182,7 @@ function notify_current_track()
 	-- print_debug("command: " .. command)
 	os.execute(command)
 
-  
+
 end
 
 function notify_metadata_updated(name, data)
