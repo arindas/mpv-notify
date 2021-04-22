@@ -8,7 +8,7 @@ Features
 --------
 
 * shows artist, title and album name (as far as detected by mpv)
-* extracts cover art using ffmpeg 
+* extracts cover art using ffmpeg
 
 Requirements
 ------------
@@ -16,10 +16,11 @@ Requirements
 * [mpv](http://mpv.io) (>= 0.3.6)
 * [Lua](http://lua.org) (>= 5.2)
 * `ffmpeg` from [https://www.ffmpeg.org/](https://www.ffmpeg.org/)
+* `ffmpegthumbnailer` from [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer) `(optional only for video thumbnails)`
 * `notify-send` from [libnotify](https://github.com/GNOME/libnotify)
 * `convert` from [ImageMagick](http://www.imagemagick.org)
 
-Install mpv, lua, ffmpeg, libnotify and ImageMagick packages
+Install mpv, lua, ffmpeg, ffmpegthumbnailer(optionl), libnotify and ImageMagick packages
 
 Installation
 ------------
@@ -32,6 +33,6 @@ and mpv will find it. Optionally, you can add it to mpv's command line:
 License
 -------
 
-mpv-notify was originally written by Roland Hieber <rohieb at rohieb.name>. I have simply 
-refactored it according to my needs. You may use it under the terms of the 
+mpv-notify was originally written by Roland Hieber <rohieb at rohieb.name>. I have simply
+refactored it according to my needs. You may use it under the terms of the
 [MIT license](http://choosealicense.com/licenses/mit/).
