@@ -27,41 +27,41 @@
 -------------------------------------------------------------------------------
 
 function print_debug(s)
-	print("DEBUG: " .. s) -- comment out for no debug info
-	return true
+  print("DEBUG: " .. s) -- comment out for no debug info
+  return true
 end
 
 -- url-escape a string, per RFC 2396, Section 2
 function string.urlescape(str)
-	local s, c = string.gsub(str, "([^A-Za-z0-9_.!~*'()/-])",
-		function(c)
-			return ("%%%02x"):format(c:byte())
-		end)
-	return s;
+  local s, c = string.gsub(str, "([^A-Za-z0-9_.!~*'()/-])",
+  function(c)
+    return ("%%%02x"):format(c:byte())
+  end)
+  return s;
 end
 
 -- escape string for html
 function string.htmlescape(str)
-	local str = string.gsub(str, "<", "&lt;")
-	str = string.gsub(str, ">", "&gt;")
-	str = string.gsub(str, "&", "&amp;")
-	str = string.gsub(str, "\"", "&quot;")
-	str = string.gsub(str, "'", "&apos;")
-	return str
+  local str = string.gsub(str, "<", "&lt;")
+  str = string.gsub(str, ">", "&gt;")
+  str = string.gsub(str, "&", "&amp;")
+  str = string.gsub(str, "\"", "&quot;")
+  str = string.gsub(str, "'", "&apos;")
+  return str
 end
 
 -- escape string for shell inclusion
 function string.shellescape(str)
-	return "'"..string.gsub(str, "'", "'\"'\"'").."'"
+  return "'"..string.gsub(str, "'", "'\"'\"'").."'"
 end
 
 -- converts string to a valid filename on most (modern) filesystems
 function string.safe_filename(str)
-	local s, _ = string.gsub(str, "([^A-Za-z0-9_.-])",
-		function(c)
-			return ("%02x"):format(c:byte())
-		end)
-	return s;
+  local s, _ = string.gsub(str, "([^A-Za-z0-9_.-])",
+  function(c)
+    return ("%02x"):format(c:byte())
+  end)
+  return s;
 end
 
 -------------------------------------------------------------------------------
@@ -71,19 +71,19 @@ end
 -- scale an image file
 -- @return boolean of success
 function scaled_image(src, dst)
-	local convert_cmd = ("convert -scale x64 -- %s %s"):format(
-		string.shellescape(src), string.shellescape(dst))
-	-- print_debug("executing " .. convert_cmd)
-	if os.execute(convert_cmd) then
-		return true
-	end
-	return false
+  local convert_cmd = ("convert -scale x64 -- %s %s"):format(
+  string.shellescape(src), string.shellescape(dst))
+  -- print_debug("executing " .. convert_cmd)
+  if os.execute(convert_cmd) then
+    return true
+  end
+  return false
 end
 
 -- extract image from audio file
 function extracted_image_from_audiofile (audiofile, imagedst)
   local ffmpeg_cmd_a = ("ffmpeg -loglevel -8 -vsync 2 -y -i %s %s > /dev/null"):format(
-    string.shellescape(audiofile), string.shellescape(imagedst)
+  string.shellescape(audiofile), string.shellescape(imagedst)
   )
 
   -- print_debug("executing " .. ffmpeg_cmd_a)
@@ -97,7 +97,7 @@ end
 -- extract image from video file
 function extracted_image_from_videofile (audiofile, imagedst)
   local ffmpeg_cmd_v = ("ffmpegthumbnailer -i %s -o %s 2>&1 > /dev/null"):format(
-    string.shellescape(audiofile), string.shellescape(imagedst)
+  string.shellescape(audiofile), string.shellescape(imagedst)
   )
 
   -- print_debug("executing " .. ffmpeg_cmd_v)
@@ -109,12 +109,12 @@ function extracted_image_from_videofile (audiofile, imagedst)
 end
 
 function get_value(data, keys)
-	for _,v in pairs(keys) do
-		if data[v] and string.len(data[v]) > 0 then
-			return data[v]
-		end
-	end
-	return ""
+  for _,v in pairs(keys) do
+    if data[v] and string.len(data[v]) > 0 then
+      return data[v]
+    end
+  end
+  return ""
 end
 
 COVER_ART_PATH = "/tmp/covert_art.jpg"
@@ -128,21 +128,21 @@ function notify_current_track()
 
   -- track doesn't contain metadata
   if not metadata then
-		return
-	end
+    return
+  end
 
   -- we try to fetch metadata values using all possible keys
-	local artist = get_value(metadata, {"artist", "ARTIST"})
+  local artist = get_value(metadata, {"artist", "ARTIST"})
   local album  = get_value(metadata, {"album", "ALBUM"})
-	local title  = get_value(metadata, {"title", "TITLE", "icy-title"})
+  local title  = get_value(metadata, {"title", "TITLE", "icy-title"})
 
-	-- print_debug("notify_current_track(): -> extracted metadata:")
-	-- print_debug("artist: " .. artist)
-	-- print_debug("album: " .. album)
+  -- print_debug("notify_current_track(): -> extracted metadata:")
+  -- print_debug("artist: " .. artist)
+  -- print_debug("album: " .. album)
   -- print_debug("title: " .. title)
 
-	-- absolute filename of currently playing audio file
-	local abs_filename = os.getenv("PWD") .. "/" .. mp.get_property_native("path")
+  -- absolute filename of currently playing audio file
+  local abs_filename = os.getenv("PWD") .. "/" .. mp.get_property_native("path")
   local bad_string = os.getenv("PWD") .. "//"
   local abs_filename = string.gsub(abs_filename,bad_string,"/")
   -- print_debug(abs_filename)
@@ -150,11 +150,11 @@ function notify_current_track()
   params = ""
   -- extract cover art: set it as icon in notification params
   if extracted_image_from_videofile(abs_filename, COVER_ART_PATH) then
-      params = "-i "..COVER_ART_PATH
+    params = "-i "..COVER_ART_PATH
   else
     if extracted_image_from_audiofile(abs_filename, COVER_ART_PATH) then
       if scaled_image(COVER_ART_PATH, ICON_PATH) then
-        params = "-i " .. ICON_PATH
+	params = "-i " .. ICON_PATH
       end
     end
   end
@@ -170,7 +170,7 @@ function notify_current_track()
   if (string.len(title) > 0) then
     if (string.len(album) > 0) then
       body_str = ("%s<br /><i>%s</i>"):format(
-        string.htmlescape(title), string.htmlescape(album))
+      string.htmlescape(title), string.htmlescape(album))
     else
       body_str = string.htmlescape(title)
     end
@@ -178,15 +178,15 @@ function notify_current_track()
 
   body = string.shellescape(body_str)
 
-	local command = ("notify-send -a mpv %s -- %s %s"):format(params, summary, body)
-	-- print_debug("command: " .. command)
-	os.execute(command)
+  local command = ("notify-send -a mpv %s -- %s %s"):format(params, summary, body)
+  -- print_debug("command: " .. command)
+  os.execute(command)
 
 
 end
 
 function notify_metadata_updated(name, data)
-	notify_current_track()
+  notify_current_track()
 end
 
 
