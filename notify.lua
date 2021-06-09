@@ -64,6 +64,13 @@ function string.safe_filename(str)
   return s;
 end
 
+-- write the string to a file
+function string.dumpf(str, path)
+  local file = io.open(path, "w")
+  file:write(str)
+  file:close()
+end
+
 -------------------------------------------------------------------------------
 -- here we go.
 -------------------------------------------------------------------------------
@@ -117,8 +124,11 @@ function get_value(data, keys)
   return ""
 end
 
-COVER_ART_PATH = "/tmp/covert_art.jpg"
-ICON_PATH = "/tmp/icon.jpg"
+COVER_ART_PATH = "/tmp/mpv.covert_art.jpg"
+ICON_PATH = "/tmp/mpv.icon.jpg"
+ARTIST_PATH = "/tmp/mpv.artist.txt"
+ALBUM_PATH = "/tmp/mpv.album.txt"
+TITLE_PATH = "/tmp/mpv.title.txt"
 
 function notify_current_track()
   -- os.remove(COVER_ART_PATH)
@@ -135,6 +145,9 @@ function notify_current_track()
   local artist = get_value(metadata, {"artist", "ARTIST"})
   local album  = get_value(metadata, {"album", "ALBUM"})
   local title  = get_value(metadata, {"title", "TITLE", "icy-title"})
+  artist:dumpf(ARTIST_PATH)
+  album:dumpf(ALBUM_PATH)
+  title:dumpf(TITLE_PATH)
 
   -- print_debug("notify_current_track(): -> extracted metadata:")
   -- print_debug("artist: " .. artist)
@@ -182,15 +195,29 @@ function notify_current_track()
   -- print_debug("command: " .. command)
   os.execute(command)
 
-
 end
 
+-- notify hook
 function notify_metadata_updated(name, data)
   notify_current_track()
+end
+
+-- empty or remove files so the clients know nothing is playing
+function cleanup(event)
+  local text_files = {ARTIST_PATH, ALBUM_PATH, TITLE_PATH}
+  local emptystr = ""
+  for _, path in ipairs(created_files) do
+    emptystr:dumpf(path)
+  end
+  local binary_files = {ICON_PATH, COVER_ART_PATH}
+  for _, path in ipairs(created_files) do
+    os.remove(path)
+  end
 end
 
 
 -- insert main() here
 
 mp.register_event("file-loaded", notify_current_track)
+mp.register_event("shutdown", cleanup)
 -- mp.observe_property("metadata", nil, notify_metadata_updated)
