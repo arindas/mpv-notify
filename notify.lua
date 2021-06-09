@@ -27,7 +27,7 @@
 -------------------------------------------------------------------------------
 
 function print_debug(s)
-  print("DEBUG: " .. s) -- comment out for no debug info
+  print("INFO: " .. s) -- comment out for no debug info
   return true
 end
 
@@ -37,7 +37,7 @@ function string.urlescape(str)
   function(c)
     return ("%%%02x"):format(c:byte())
   end)
-  return s;
+  return s
 end
 
 -- escape string for html
@@ -61,7 +61,7 @@ function string.safe_filename(str)
   function(c)
     return ("%02x"):format(c:byte())
   end)
-  return s;
+  return s
 end
 
 -- write the string to a file
@@ -70,6 +70,16 @@ function string.dumpf(str, path)
   file:write(str)
   file:close()
 end
+
+-- check if a file exists ignoring case
+function find_lowercase_file(path, filename)
+  local command = ("find %s -iname %s -type f"):format(string.shellescape(path), string.shellescape(filename), "r")
+  local pfile = io.popen(command)
+  local output = pfile:read()
+  pfile:close()
+  return output
+end
+
 
 -------------------------------------------------------------------------------
 -- here we go.
@@ -103,7 +113,7 @@ end
 
 -- extract image from video file
 function extracted_image_from_videofile (audiofile, imagedst)
-  local ffmpeg_cmd_v = ("ffmpegthumbnailer -i %s -o %s 2>&1 > /dev/null"):format(
+  local ffmpeg_cmd_v = ("ffmpegthumbnailer -i %s -o %s 2>&1 >/dev/null"):format(
   string.shellescape(audiofile), string.shellescape(imagedst)
   )
 
@@ -122,6 +132,43 @@ function get_value(data, keys)
     end
   end
   return ""
+end
+
+-- return path without .. or .
+function os.realpath(path)
+  local pfile = io.popen(("realpath %s"):format(string.shellescape(path)), "r")
+  local output = pfile:read()
+  pfile:close()
+  return output
+end
+
+-- copy file
+function os.copy(source, dest)
+  local command = ("cp %s %s"):format(string.shellescape(source), string.shellescape(dest))
+  os.execute(command)
+end
+
+-- look for a list of possible cover art images in the same folder as the file
+-- @param path absolute file path of currently played file, or nil if no match
+function coppied_directory_cover(path, imagedst)
+  -- print_debug("get_folder_cover_art: file path is " .. path)
+  local cover_extensions = { "png", "jpg", "jpeg", "gif" }
+  local cover_names = { "cover", "folder", "front", "back", "insert" }
+
+  local dir = os.realpath(string.match(path, "^(.*)/[^/]+$"))
+
+  for _, name in pairs(cover_names) do
+    for _, ext in pairs(cover_extensions) do
+      -- print_debug("get_folder_cover_art: trying " .. cover_path)
+      local cover_name = name .. "." .. ext
+      local actual_name = find_lowercase_file(dir, cover_name)
+      if actual_name ~= nil then
+	os.copy(actual_name, imagedst)
+	return true
+      end
+    end
+  end
+  return false
 end
 
 COVER_ART_PATH = "/tmp/mpv.covert_art.jpg"
@@ -162,14 +209,16 @@ function notify_current_track()
 
   params = ""
   -- extract cover art: set it as icon in notification params
-  if extracted_image_from_videofile(abs_filename, COVER_ART_PATH) then
-    params = "-i "..COVER_ART_PATH
-  else
-    if extracted_image_from_audiofile(abs_filename, COVER_ART_PATH) then
-      if scaled_image(COVER_ART_PATH, ICON_PATH) then
-	params = "-i " .. ICON_PATH
-      end
+  if coppied_directory_cover(abs_filename, COVER_ART_PATH) then
+    if scaled_image(COVER_ART_PATH, ICON_PATH) then
+      params = "-i " .. ICON_PATH
     end
+  elseif extracted_image_from_audiofile(abs_filename, COVER_ART_PATH) then
+    if scaled_image(COVER_ART_PATH, ICON_PATH) then
+      params = "-i " .. ICON_PATH
+    end
+  elseif extracted_image_from_videofile(abs_filename, COVER_ART_PATH) then
+    params = "-i "..COVER_ART_PATH
   end
 
   -- form notification summary
@@ -206,11 +255,11 @@ end
 function cleanup(event)
   local text_files = {ARTIST_PATH, ALBUM_PATH, TITLE_PATH}
   local emptystr = ""
-  for _, path in ipairs(created_files) do
+  for _, path in ipairs(text_files) do
     emptystr:dumpf(path)
   end
   local binary_files = {ICON_PATH, COVER_ART_PATH}
-  for _, path in ipairs(created_files) do
+  for _, path in ipairs(binary_files) do
     os.remove(path)
   end
 end
