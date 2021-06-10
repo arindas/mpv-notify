@@ -9,6 +9,7 @@ Features
 
 * shows artist, title and album name (as far as detected by mpv)
 * extracts cover art using ffmpeg
+* writes icon, artist, album, title to temporary files (useful for OBS)
 
 Requirements
 ------------
